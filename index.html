@@ -375,6 +375,7 @@
                 <button class="close-btn" id="closeChat">&times;</button>
             </div>
             <div class="chat-messages" id="chatMessages"></div>
+            <div id="typingIndicator" style="display:none; padding:0.6rem 1rem; color:#ccc; font-size:0.9rem;">대화 상대가 입력 중입니다...</div>
             <div class="chat-input-area">
                 <input type="text" id="chatInput" placeholder="대화를 시작하세요..." autocomplete="off">
                 <button class="chat-send-btn" id="sendBtn">전송</button>
@@ -409,6 +410,7 @@
         };
 
         let currentCharacter = null;
+        let currentCharacterKey = null;
         let chatHistory = [];
 
         // --- 1. GSAP & ScrollTrigger ---
@@ -505,6 +507,10 @@
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             addMessage(currentCharacter.greeting, 'ai');
+            currentCharacterKey = charKey;
+            setTimeout(() => {
+                try { chatInput.focus(); } catch (e) { /* ignore */ }
+            }, 60);
         }
 
         closeBtn.addEventListener('click', () => {
@@ -527,7 +533,7 @@
         async function sendMessage() {
             const text = chatInput.value.trim();
             if (!text) return;
-            
+
             addMessage(text, 'user');
             chatHistory.push({ role: "user", content: text });
             chatInput.value = '';
@@ -538,25 +544,34 @@
                     ...chatHistory,
                 ];
 
+                // show typing indicator if present
+                const typingEl = document.getElementById('typingIndicator');
+                if (typingEl) typingEl.style.display = 'block';
+
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: messagesForApi })
+                    body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: messagesForApi, character: currentCharacterKey })
                 });
 
-                const data = await response.json();
+                // handle response robustly
+                const textBody = await response.text();
+                let data = null;
+                try { data = textBody ? JSON.parse(textBody) : null; } catch (e) { throw new Error('서버가 JSON을 반환하지 않았습니다: ' + textBody); }
 
-                if (data.error) {
-                    throw new Error(data.error.message || JSON.stringify(data.error));
-                }
+                if (!data) throw new Error('서버 응답이 비어 있습니다.');
+                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
                 const aiResponse = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '응답을 받지 못했습니다.';
 
                 chatHistory.push({ role: "assistant", content: aiResponse });
+                if (typingEl) typingEl.style.display = 'none';
                 addMessage(aiResponse, 'ai');
 
             } catch (error) {
                 console.error(error);
+                const typingEl = document.getElementById('typingIndicator');
+                if (typingEl) typingEl.style.display = 'none';
                 addMessage("오류: " + error.message, 'ai');
             }
         }

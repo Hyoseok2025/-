@@ -47,6 +47,28 @@ function isRateLimited(ip) {
   return false;
 }
 
+// ========== Diagnostics & Canned Responses ==========
+let lastOpenAIStatus = { status: null, timestamp: null, body: null };
+
+// Simple in-memory cache for canned responses per character (could be expanded)
+const cannedResponses = {
+  horn: "하하하! 전장 경험으로 말하자면, 네가 다음 수를 내기 전에 내게 묻거라. 강하게, 그러나 신중하게.",
+  hwarin: "검은 마음을 다스리고 몸을 바로잡아라. 자세가 흔들리면 기술도 흔들린다.",
+  kai: "어이 챔피언, 부품은 여기서 구해. 싸게 해줄게. 다음엔 더 강한 삽질로 돌려줄게~"
+};
+
+// small LRU-like cache for demo responses (keyed by character)
+const demoCache = new Map();
+function cacheDemoResponse(characterKey, response) {
+  demoCache.set(characterKey, { response, ts: Date.now() });
+  // keep cache small
+  if (demoCache.size > 10) {
+    const firstKey = demoCache.keys().next().value;
+    demoCache.delete(firstKey);
+  }
+}
+
+
 // ========== Middleware ==========
 app.use((req, res, next) => {
   res.header('X-Content-Type-Options', 'nosniff');
@@ -123,42 +145,41 @@ app.post('/api/chat', (req, res) => {
         temperature: 0.7
       })
     }).then(response => {
-      // If OpenAI returns 429 (quota), fall back to demo response instead of propagating 429
-      if (response.status === 429) {
-        return response.json().then(data => {
-          console.warn('OpenAI returned 429; returning demo response instead.');
-          return res.status(200).json({
-            choices: [{
-              message: {
-                content: "죄송합니다 — 현재 OpenAI 사용량이 초과되어 실시간 응답을 제공할 수 없습니다. 데모 모드 응답을 반환합니다."
-              }
-            }],
-            // include original error for debugging if needed
-            original_error: data
-          });
-        });
-      }
+      // update lastOpenAIStatus
+      return response.text().then(bodyText => {
+        let parsed = null;
+        try { parsed = bodyText ? JSON.parse(bodyText) : null; } catch (e) { parsed = { raw: bodyText }; }
+        lastOpenAIStatus = { status: response.status, timestamp: new Date().toISOString(), body: (parsed && parsed.error && parsed.error.message) ? parsed.error.message : (typeof bodyText === 'string' ? bodyText.slice(0, 500) : null) };
 
-      if (!response.ok) {
-        return response.json().then(data => {
-          res.status(response.status).json(data);
-        });
-      }
+        // If OpenAI returns 429 (quota), fall back to canned/demo response instead of propagating 429
+        if (response.status === 429) {
+          console.warn('OpenAI returned 429; returning canned/demo response instead.');
+          const charKey = req.body.character;
+          const canned = (charKey && cannedResponses[charKey]) ? cannedResponses[charKey] : "죄송합니다 — 현재 OpenAI 사용량이 초과되어 실시간 응답을 제공할 수 없습니다. 잠시 후 다시 시도해 주세요.";
+          cacheDemoResponse(charKey || 'generic', canned);
+          return res.status(200).json({ choices: [{ message: { content: canned } }], original_error: parsed });
+        }
 
-      return response.json().then(data => {
-        res.json(data);
+        if (!response.ok) {
+          // propagate other errors
+          return res.status(response.status).json(parsed || { error: { message: 'Unknown error from OpenAI' } });
+        }
+
+        // success path: return parsed JSON
+        return res.json(parsed);
       });
     }).catch(err => {
       console.error('Error forwarding to OpenAI:', err);
-      // On network/internal error, fall back to demo response so the UI remains usable
-      res.status(200).json({
-        choices: [{
-          message: {
-            content: "데모 응답: OpenAI API에 접속하는 동안 오류가 발생했습니다. 나중에 다시 시도해 주세요."
-          }
-        }],
-        error: { message: 'Failed to reach OpenAI API.' }
-      });
+      lastOpenAIStatus = { status: 'network_error', timestamp: new Date().toISOString(), body: err.message };
+      // On network/internal error, attempt to return character-specific canned response
+      const charKey = req.body.character;
+      const cached = demoCache.get(charKey);
+      if (cached) {
+        return res.status(200).json({ choices: [{ message: { content: cached.response } }], note: 'served from demo cache' });
+      }
+      const canned = (charKey && cannedResponses[charKey]) ? cannedResponses[charKey] : "데모 응답: OpenAI API에 접속하는 동안 오류가 발생했습니다. 나중에 다시 시도해 주세요.";
+      cacheDemoResponse(charKey || 'generic', canned);
+      return res.status(200).json({ choices: [{ message: { content: canned } }], error: { message: 'Failed to reach OpenAI API.' } });
     });
 
   } catch (err) {
@@ -169,7 +190,25 @@ app.post('/api/chat', (req, res) => {
 
 // ========== Health Check ==========
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), lastOpenAIStatus });
+});
+
+// Diagnostics endpoint: show last OpenAI status, FORCE_DEMO, key source and basic rate info
+app.get('/api/diagnostics', (req, res) => {
+  const rateInfo = {
+    trackedClients: requestCounts.size,
+    windowMs: RATE_LIMIT_WINDOW,
+    maxRequestsPerMinute: MAX_REQUESTS_PER_MINUTE
+  };
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    lastOpenAIStatus,
+    FORCE_DEMO,
+    key_source: STARTUP_KEY_SOURCE,
+    key_preview: STARTUP_KEY_PREVIEW,
+    rateInfo
+  });
 });
 
 // ========== Start Server ==========
