@@ -66,7 +66,12 @@ app.post('/api/chat', (req, res) => {
     });
   }
 
-  const OPENAI_KEY = process.env.OPENAI_API_KEY;
+  // Support either OPENAI_API_KEY (preferred) or MY_API_KEY (alternate)
+  const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.MY_API_KEY;
+
+  if (!process.env.OPENAI_API_KEY && process.env.MY_API_KEY) {
+    console.log('ℹ️  Using API key from MY_API_KEY environment variable (fallback).');
+  }
   
   // If force-demo is enabled, or key is not set / is placeholder, return demo response
   if (FORCE_DEMO || !OPENAI_KEY || OPENAI_KEY.includes('REPLACE')) {
