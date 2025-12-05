@@ -3,6 +3,7 @@ const path = require('path');
 const fetch = require('node-fetch');
 require('dotenv').config();
 
+const FORCE_DEMO = (process.env.FORCE_DEMO === 'true' || process.env.FORCE_DEMO === '1');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -67,12 +68,12 @@ app.post('/api/chat', (req, res) => {
 
   const OPENAI_KEY = process.env.OPENAI_API_KEY;
   
-  // If key is not set or is placeholder, return demo response
-  if (!OPENAI_KEY || OPENAI_KEY.includes('REPLACE')) {
+  // If force-demo is enabled, or key is not set / is placeholder, return demo response
+  if (FORCE_DEMO || !OPENAI_KEY || OPENAI_KEY.includes('REPLACE')) {
     return res.status(200).json({
       choices: [{
         message: {
-          content: "안녕하세요! 저는 서버에 OPENAI_API_KEY가 설정되지 않아 실제 API를 호출할 수 없습니다. .env 파일에 유효한 OpenAI API 키를 설정해 주세요. 그 후 서버를 다시 시작하면 실제 대화가 가능합니다."
+          content: "안녕하세요! 서버가 현재 데모 모드로 동작 중입니다. 실제 OpenAI 호출을 사용하려면 `.env`에 유효한 `OPENAI_API_KEY`를 설정하거나 `FORCE_DEMO=false`로 변경하고 서버를 재시작하세요."
         }
       }]
     });
@@ -106,17 +107,42 @@ app.post('/api/chat', (req, res) => {
         temperature: 0.7
       })
     }).then(response => {
+      // If OpenAI returns 429 (quota), fall back to demo response instead of propagating 429
+      if (response.status === 429) {
+        return response.json().then(data => {
+          console.warn('OpenAI returned 429; returning demo response instead.');
+          return res.status(200).json({
+            choices: [{
+              message: {
+                content: "죄송합니다 — 현재 OpenAI 사용량이 초과되어 실시간 응답을 제공할 수 없습니다. 데모 모드 응답을 반환합니다."
+              }
+            }],
+            // include original error for debugging if needed
+            original_error: data
+          });
+        });
+      }
+
       if (!response.ok) {
         return response.json().then(data => {
           res.status(response.status).json(data);
         });
       }
+
       return response.json().then(data => {
         res.json(data);
       });
     }).catch(err => {
       console.error('Error forwarding to OpenAI:', err);
-      res.status(500).json({ error: { message: 'Failed to reach OpenAI API.' } });
+      // On network/internal error, fall back to demo response so the UI remains usable
+      res.status(200).json({
+        choices: [{
+          message: {
+            content: "데모 응답: OpenAI API에 접속하는 동안 오류가 발생했습니다. 나중에 다시 시도해 주세요."
+          }
+        }],
+        error: { message: 'Failed to reach OpenAI API.' }
+      });
     });
 
   } catch (err) {
@@ -135,6 +161,9 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server listening on http://localhost:${PORT}`);
   console.log(`📝 API Endpoint: POST http://localhost:${PORT}/api/chat`);
   console.log(`💊 Health Check: GET http://localhost:${PORT}/api/health`);
+  if (FORCE_DEMO) {
+    console.log(`⚠️  FORCE_DEMO is enabled — server will return demo responses.`);
+  }
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.includes('REPLACE')) {
     console.log(`⚠️  Warning: OPENAI_API_KEY not set. Using demo mode.`);
     console.log(`   Set OPENAI_API_KEY in .env to enable real API calls.`);
