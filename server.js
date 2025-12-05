@@ -88,9 +88,7 @@ app.use(express.static(path.join(__dirname), {
 }));
 
 // Fallback to index.html for SPA routing
-app.get(/^(?!.*\.(js|css|json|jpg|png|gif|svg|ico|woff|woff2)$).*$/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+// (SPA fallback moved below after API routes)
 
 // ========== API: Chat Completions Proxy ==========
 app.post('/api/chat', (req, res) => {
@@ -209,6 +207,11 @@ app.get('/api/diagnostics', (req, res) => {
     key_preview: STARTUP_KEY_PREVIEW,
     rateInfo
   });
+});
+
+// Fallback to index.html for SPA routing (non-API routes)
+app.get(/^(?!\/api)(?!.*\.(js|css|json|jpg|png|gif|svg|ico|woff|woff2)$).*$/, (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // ========== Start Server ==========
