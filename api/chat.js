@@ -238,14 +238,22 @@
                 body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: messagesForApi })
             });
 
-            const data = await response.json();
+            // 안전하게 응답 처리: 빈 바디나 비-JSON에 대비
+            const text = await response.text();
+            let data = null;
+            try {
+                data = text ? JSON.parse(text) : null;
+            } catch (err) {
+                throw new Error('서버가 JSON을 반환하지 않았습니다: ' + text);
+            }
 
+            if (!data) throw new Error('서버 응답이 비어 있습니다.');
             if (data.error) {
                 throw new Error(data.error.message || JSON.stringify(data.error));
             }
 
             // AI 응답 텍스트 추출 (OpenAI 포맷)
-            const aiResponse = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || JSON.stringify(data);
+            const aiResponse = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || (data.choices ? JSON.stringify(data.choices) : JSON.stringify(data));
 
             // AI 응답을 히스토리에 추가
             chatHistory.push({ role: "assistant", content: aiResponse });
