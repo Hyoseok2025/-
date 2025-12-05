@@ -207,16 +207,9 @@
         chatHistory.push({ role: "user", content: text });
         chatInput.value = '';
         
-        // API 키 확인
-        if(API_KEY === 'YOUR_API_KEY_HERE') {
-            addMessage("⚠️ API 키가 설정되지 않았습니다. 코드를 확인해주세요.", 'ai');
-            return;
-        }
-
         // 로딩 표시
         typingIndicator.style.display = 'block';
-
-        // OpenAI API 호출 준비
+        // OpenAI 호출은 서버사이드 프록시로 전달합니다.
         try {
             // 시스템 프롬프트와 대화 히스토리 결합
             const messagesForApi = [
@@ -227,27 +220,21 @@
                 ...chatHistory,
             ];
 
-            const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
+            const response = await fetch('/api/chat', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${API_KEY}` // OpenAI 인증 방식
-                },
-                body: JSON.stringify({
-                    model: "gpt-3.5-turbo", // 사용할 모델
-                    messages: messagesForApi
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: messagesForApi })
             });
 
             const data = await response.json();
-            
+
             if (data.error) {
-                throw new Error(data.error.message);
+                throw new Error(data.error.message || JSON.stringify(data.error));
             }
 
             // AI 응답 텍스트 추출 (OpenAI 포맷)
-            const aiResponse = data.choices[0].message.content;
-            
+            const aiResponse = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || JSON.stringify(data);
+
             // AI 응답을 히스토리에 추가
             chatHistory.push({ role: "assistant", content: aiResponse });
 
@@ -257,7 +244,7 @@
         } catch (error) {
             console.error(error);
             typingIndicator.style.display = 'none';
-            addMessage("오류가 발생했습니다: " + error.message + " (API 키, 모델명, CORS 설정 등을 확인해 주세요)", 'ai');
+            addMessage("오류가 발생했습니다: " + error.message, 'ai');
         }
     }
 
