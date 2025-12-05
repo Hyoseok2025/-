@@ -175,11 +175,23 @@
         // 첫 인사말 출력
         addMessage(currentCharacter.greeting, 'ai');
         // 첫 인사말은 history에 넣지 않습니다. (API 호출 때 시스템 프롬프트만으로 시작)
+        // 입력창에 포커스하여 사용자가 바로 입력할 수 있게 함
+        setTimeout(() => {
+            try { chatInput.focus(); } catch (e) { /* ignore */ }
+        }, 60);
     }
 
     closeBtn.addEventListener('click', () => {
         modal.style.display = 'none';
         document.body.style.overflow = 'auto';
+    });
+
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
     });
 
     function addMessage(text, sender) {
