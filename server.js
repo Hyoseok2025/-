@@ -87,6 +87,11 @@ app.post('/api/chat', (req, res) => {
       });
     }
 
+    // Forward to OpenAI with conservative token limits to avoid quota spikes
+    const modelToUse = model || 'gpt-3.5-turbo';
+    const requestedMax = parseInt(req.body.max_tokens || '128', 10) || 128;
+    const maxTokens = Math.min(Math.max(requestedMax, 16), 256); // clamp between 16 and 256
+
     // Forward to OpenAI
     fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -95,9 +100,10 @@ app.post('/api/chat', (req, res) => {
         'Authorization': `Bearer ${OPENAI_KEY}`
       },
       body: JSON.stringify({ 
-        model: model || 'gpt-3.5-turbo', 
+        model: modelToUse,
         messages,
-        max_tokens: 500
+        max_tokens: maxTokens,
+        temperature: 0.7
       })
     }).then(response => {
       if (!response.ok) {
