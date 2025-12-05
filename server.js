@@ -4,6 +4,21 @@ const fetch = require('node-fetch');
 require('dotenv').config();
 
 const FORCE_DEMO = (process.env.FORCE_DEMO === 'true' || process.env.FORCE_DEMO === '1');
+
+// Mask a secret for safe logging (do not print full key)
+function maskKey(k) {
+  if (!k) return '';
+  if (k.length <= 8) return '****';
+  return `${k.slice(0,4)}...${k.slice(-4)}`;
+}
+
+const STARTUP_KEY_SOURCE = (process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.includes('REPLACE'))
+  ? 'OPENAI_API_KEY'
+  : (process.env.MY_API_KEY ? 'MY_API_KEY' : 'none');
+
+const STARTUP_KEY_PREVIEW = STARTUP_KEY_SOURCE === 'OPENAI_API_KEY'
+  ? maskKey(process.env.OPENAI_API_KEY)
+  : (STARTUP_KEY_SOURCE === 'MY_API_KEY' ? maskKey(process.env.MY_API_KEY) : null);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -68,10 +83,6 @@ app.post('/api/chat', (req, res) => {
 
   // Support either OPENAI_API_KEY (preferred) or MY_API_KEY (alternate)
   const OPENAI_KEY = process.env.OPENAI_API_KEY || process.env.MY_API_KEY;
-
-  if (!process.env.OPENAI_API_KEY && process.env.MY_API_KEY) {
-    console.log('ℹ️  Using API key from MY_API_KEY environment variable (fallback).');
-  }
   
   // If force-demo is enabled, or key is not set / is placeholder, return demo response
   if (FORCE_DEMO || !OPENAI_KEY || OPENAI_KEY.includes('REPLACE')) {
@@ -169,8 +180,15 @@ app.listen(PORT, '0.0.0.0', () => {
   if (FORCE_DEMO) {
     console.log(`⚠️  FORCE_DEMO is enabled — server will return demo responses.`);
   }
-  if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY.includes('REPLACE')) {
-    console.log(`⚠️  Warning: OPENAI_API_KEY not set. Using demo mode.`);
-    console.log(`   Set OPENAI_API_KEY in .env to enable real API calls.`);
+
+  // Log which environment variable will be used for the API key (masked)
+  if (STARTUP_KEY_SOURCE === 'OPENAI_API_KEY') {
+    console.log(`🔑 Using API key from OPENAI_API_KEY (masked): ${STARTUP_KEY_PREVIEW}`);
+  } else if (STARTUP_KEY_SOURCE === 'MY_API_KEY') {
+    console.log(`🔑 Using API key from MY_API_KEY (masked): ${STARTUP_KEY_PREVIEW}`);
+    console.log('   Tip: You can rename to OPENAI_API_KEY to prefer that variable.');
+  } else {
+    console.log(`⚠️  No API key found in environment. Server will return demo responses.`);
+    console.log(`   Set OPENAI_API_KEY or MY_API_KEY in .env to enable real API calls.`);
   }
 });
