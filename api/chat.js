@@ -85,7 +85,7 @@ module.exports = async (req, res) => {
     }).join('\n');
 
     // Gemini API 호출 (Bearer 토큰 인증)
-    const fetch = (await import('node-fetch')).default;
+    const fetch = globalThis.fetch || (await import('node-fetch')).default;
     const response = await fetch(GEMINI_API_URL, {
       method: 'POST',
       headers: {
