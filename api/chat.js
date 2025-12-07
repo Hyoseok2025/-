@@ -70,8 +70,8 @@ module.exports = async (req, res) => {
     const GEMINI_ACCESS_TOKEN = process.env.GEMINI_ACCESS_TOKEN;
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
 
-    // Vertex AI 엔드포인트 URL
-    const VERTEX_AI_URL = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/gemini-1.5-flash:generateContent`;
+    // Vertex AI 엔드포인트 URL (올바른 모델 이름 사용)
+    const VERTEX_AI_URL = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/gemini-pro:generateContent`;
 
     // 데모 모드이거나 토큰/프로젝트ID가 없으면 canned response 반환
     if (FORCE_DEMO || !GEMINI_ACCESS_TOKEN || !GCP_PROJECT_ID) {
