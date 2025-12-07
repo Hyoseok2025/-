@@ -47,24 +47,13 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel
 
-      - name: Set Vercel Environment Variables
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: |
-          # Vercel 프로젝트에 환경변수 설정 (production)
-          # GEMINI_API_URL 설정
-          echo "${{ secrets.GEMINI_API_URL }}" | vercel env add GEMINI_API_URL production --token=$VERCEL_TOKEN || true
-          
-          # GEMINI_ACCESS_TOKEN 설정 (주의: 1시간마다 만료됨)
-          echo "$GEMINI_ACCESS_TOKEN" | vercel env add GEMINI_ACCESS_TOKEN production --token=$VERCEL_TOKEN || true
-
       - name: Deploy to Vercel (Production)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          # Production 배포
-          vercel --prod --token=$VERCEL_TOKEN --yes
+          # Production 배포 (환경변수를 배포 시점에 주입)
+          vercel --prod --token=$VERCEL_TOKEN --yes \
+            -e GEMINI_API_URL="${{ secrets.GEMINI_API_URL }}" \
+            -e GEMINI_ACCESS_TOKEN="$GEMINI_ACCESS_TOKEN"
