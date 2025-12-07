@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const fetch = require('node-fetch');
 const { GoogleAuth } = require('google-auth-library');
+const { execFileSync } = require('child_process');
 require('dotenv').config();
 
 const FORCE_DEMO = (process.env.FORCE_DEMO === 'true' || process.env.FORCE_DEMO === '1');
@@ -195,17 +196,57 @@ app.post('/api/chat', async (req, res) => {
     let requestUrl = endpoint;
     const headers = { 'Content-Type': 'application/json' };
 
-    // If using service account credentials, obtain OAuth2 access token
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS && provider === 'gemini') {
-      const auth = new GoogleAuth({ keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS, scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
-      const client = await auth.getClient();
-      const tokenRes = await client.getAccessToken();
-      const token = (tokenRes && tokenRes.token) ? tokenRes.token : (typeof tokenRes === 'string' ? tokenRes : null);
-      if (!token) throw new Error('Failed to obtain access token from service account');
-      headers['Authorization'] = `Bearer ${token}`;
-    } else if (provider === 'gemini') {
-      // If not using service account, use API key in URL (already validated earlier)
-      if (apiKey) {
+    // Authentication priority for Gemini (when provider === 'gemini'):
+    // 1) IMPERSONATE_SA: call `gcloud auth print-access-token --impersonate-service-account=...`
+    // 2) ADC (Application Default Credentials) via GoogleAuth (no keyFilename)
+    // 3) GOOGLE_APPLICATION_CREDENTIALS service account JSON
+    // 4) API key in URL (fallback)
+    if (provider === 'gemini') {
+      let token = null;
+      // 1) Impersonation via gcloud
+      if (process.env.IMPERSONATE_SA) {
+        try {
+          // execFileSync returns a Buffer/string
+          const sa = process.env.IMPERSONATE_SA;
+          // Allow optional extra args like --quiet if needed
+          const out = execFileSync('gcloud', ['auth', 'print-access-token', `--impersonate-service-account=${sa}`], { encoding: 'utf8', timeout: 7000 });
+          token = out && out.trim();
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+        } catch (e) {
+          console.warn('Impersonation via gcloud failed:', e && e.message ? e.message : e);
+        }
+      }
+
+      // 2) ADC using GoogleAuth (preferred) if we don't already have a token
+      if (!token) {
+        try {
+          const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+          const client = await auth.getClient();
+          const tokenRes = await client.getAccessToken();
+          token = (tokenRes && tokenRes.token) ? tokenRes.token : (typeof tokenRes === 'string' ? tokenRes : null);
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+        } catch (e) {
+          console.warn('ADC/GoogleAuth token retrieval failed (continuing to next fallback):', e && e.message ? e.message : e);
+        }
+      }
+
+      // 3) Service account JSON via GOOGLE_APPLICATION_CREDENTIALS (older behavior)
+      if (!token && process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        try {
+          const auth = new GoogleAuth({ keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS, scopes: ['https://www.googleapis.com/auth/cloud-platform'] });
+          const client = await auth.getClient();
+          const tokenRes = await client.getAccessToken();
+          token = (tokenRes && tokenRes.token) ? tokenRes.token : (typeof tokenRes === 'string' ? tokenRes : null);
+          if (token) headers['Authorization'] = `Bearer ${token}`;
+        } catch (e) {
+          console.warn('Service account key token retrieval failed:', e && e.message ? e.message : e);
+        }
+      }
+
+      // 4) Fallback: API key in URL
+      if (!token && apiKey) {
         if (requestUrl.includes('YOUR_API_KEY')) {
           requestUrl = requestUrl.replace(/YOUR_API_KEY/g, encodeURIComponent(apiKey));
         } else if (/[?&]key=[^&]*/.test(requestUrl)) {
@@ -300,6 +341,8 @@ app.get('/api/diagnostics', (req, res) => {
     key_source: STARTUP_KEY_SOURCE,
     key_preview: STARTUP_KEY_PREVIEW,
     gemini_url: GEMINI_URL || null,
+    impersonate_sa: process.env.IMPERSONATE_SA || null,
+    google_application_credentials: process.env.GOOGLE_APPLICATION_CREDENTIALS || null,
     rateInfo
   });
 });
@@ -323,6 +366,9 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🔑 Using Gemini key from GEMINI_API_KEY (masked): ${STARTUP_KEY_PREVIEW}`);
     console.log(`🔗 Gemini URL: ${GEMINI_URL || '(not set)'} `);
     console.log('   Tip: Set GEMINI_API_URL in .env to point to your Gemini endpoint.');
+    if (process.env.IMPERSONATE_SA) console.log(`🤝 Impersonation enabled via IMPERSONATE_SA=${process.env.IMPERSONATE_SA}`);
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) console.log('🔐 GOOGLE_APPLICATION_CREDENTIALS is set (service account JSON will be used if ADC not available).');
+    console.log('⚠️  Authentication priority: IMPERSONATE_SA -> ADC (gcloud application-default) -> GOOGLE_APPLICATION_CREDENTIALS -> API key in URL');
   } else if (STARTUP_KEY_SOURCE === 'OPENAI_API_KEY') {
     console.log(`🔑 Using API key from OPENAI_API_KEY (masked): ${STARTUP_KEY_PREVIEW}`);
   } else if (STARTUP_KEY_SOURCE === 'MY_API_KEY') {
