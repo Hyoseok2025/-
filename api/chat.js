@@ -64,41 +64,36 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: { message: 'Invalid messages array' } });
     }
 
-    // 환경변수에서 Vertex AI 설정 로드
-    const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID;
-    const GCP_REGION = process.env.GCP_REGION || 'us-central1';
-    const GEMINI_ACCESS_TOKEN = process.env.GEMINI_ACCESS_TOKEN;
+    // 환경변수에서 Gemini 설정 로드
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+    const GEMINI_API_URL = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
 
-    // Vertex AI 엔드포인트 URL (streamGenerateContent 사용)
-    const VERTEX_AI_URL = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/gemini-1.0-pro:streamGenerateContent`;
-
-    // 데모 모드이거나 토큰/프로젝트ID가 없으면 canned response 반환
-    if (FORCE_DEMO || !GEMINI_ACCESS_TOKEN || !GCP_PROJECT_ID) {
+    // 데모 모드이거나 API 키가 없으면 canned response 반환
+    if (FORCE_DEMO || !GEMINI_API_KEY) {
       const canned = getCannedResponse(character);
       return res.status(200).json({
         choices: [{ message: { content: canned } }],
-        note: FORCE_DEMO ? 'FORCE_DEMO enabled' : 'Missing credentials'
+        note: FORCE_DEMO ? 'FORCE_DEMO enabled' : 'Missing API key'
       });
     }
 
-    // 메시지 포맷팅 (Vertex AI Gemini 형식)
+    // 메시지 포맷팅 (Gemini 형식)
     const prompt = messages.map(m => {
       const role = m.role === 'system' ? 'System' : m.role === 'user' ? 'User' : 'Assistant';
       return `[${role}] ${m.content}`;
     }).join('\n');
 
-    // Vertex AI Gemini API 호출 (Bearer 토큰 인증)
+    // Gemini API 호출 (API 키 인증)
     const fetch = globalThis.fetch || (await import('node-fetch')).default;
-    const response = await fetch(VERTEX_AI_URL, {
+    const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GEMINI_ACCESS_TOKEN}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         contents: [{
-          role: 'user',
           parts: [{ text: prompt }]
         }],
         generationConfig: {
