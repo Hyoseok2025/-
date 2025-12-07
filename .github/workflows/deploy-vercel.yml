@@ -23,8 +23,8 @@ jobs:
         id: auth
         uses: google-github-actions/auth@v2
         with:
-          # Workload Identity Provider 전체 경로 (기존 oidc1 사용)
-          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-pool/providers/oidc1'
+          # Workload Identity Provider 전체 경로
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
           # 서비스 계정 이메일
           service_account: 'gemini-caller@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
           # 토큰 형식
