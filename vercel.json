@@ -2,5 +2,7 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" }
   ],
-  "outputDirectory": "."
+  "routes": [
+    { "src": "/img/(.*)", "dest": "/img/$1" }
+  ]
 }
