@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEURAL DREAMSCAPE | AI Portfolio</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        /* --- 1. 기본 설정 (Reset & Base) --- */
+        :root {
+            --bg-color: #050505;
+            --text-color: #ffffff;
+            --accent-color: #00f2ff;
+            --secondary-color: #7000ff;
+            --cursor-size: 30px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* --- 2. 커스텀 커서 --- */
+        .cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--cursor-size);
+            height: var(--cursor-size);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+            mix-blend-mode: difference;
+        }
+
+        .cursor.hovered {
+            width: 80px;
+            height: 80px;
+            background-color: rgba(0, 242, 255, 0.2);
+            border-color: transparent;
+        }
+
+        /* --- 3. 배경 파티클 --- */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        /* --- 4. 레이아웃 --- */
+        section {
+            min-height: 100vh;
+            padding: 4rem 10%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .hero { text-align: center; }
+
+        .hero h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #fff, var(--accent-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            color: #ccc;
+            opacity: 0;
+            transform: translateY(30px);
+            margin-top: 1rem;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            animation: bounce 2s infinite;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        .card-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .card {
+            position: relative;
+            height: 500px;
+            background: #111;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #333;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer !important;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 0 30px rgba(112, 0, 255, 0.4);
+            border-color: var(--accent-color);
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+            filter: grayscale(30%);
+        }
+
+        .card:hover img {
+            transform: scale(1.1);
+            filter: grayscale(0%);
+        }
+
+        .card-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%);
+        }
+
+        .card-info h3 {
+            color: var(--accent-color);
+            margin-bottom: 0;
+            font-size: 1.4rem;
+        }
+
+        .card-info p {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease, opacity 0.5s ease;
+            color: #ddd;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-top: 0.5rem;
+        }
+
+        .card:hover .card-info {
+            background: linear-gradient(to top, #000 0%, rgba(0,0,0,0.9) 100%);
+        }
+
+        .card:hover .card-info p {
+            max-height: 300px;
+            opacity: 1;
+        }
+
+        /* --- 비디오 섹션 --- */
+        .video-wrapper {
+            width: 100%;
+            max-width: 1000px;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border: 2px solid #333;
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        .video-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* --- 5. 채팅 모달 --- */
+        .chat-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 500px;
+            height: 80vh;
+            background: #111;
+            border: 1px solid var(--accent-color);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 50px var(--accent-color);
+            overflow: hidden;
+            position: relative;
+            cursor: auto;
+        }
+
+        .chat-header {
+            padding: 1rem;
+            background: linear-gradient(90deg, #1a0b2e, #000);
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 0.8rem 1rem;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .message.ai {
+            align-self: flex-start;
+            background: #222;
+            border-left: 3px solid var(--accent-color);
+            color: #eee;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: var(--secondary-color);
+            color: #fff;
+        }
+
+        .chat-input-area {
+            padding: 1rem;
+            border-top: 1px solid #333;
+            display: flex;
+            gap: 10px;
+            background: #000;
+        }
+
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px;
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .chat-input-area input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .chat-send-btn {
+            padding: 0 20px;
+            background: var(--accent-color);
+            border: none;
+            color: #000;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* 애니메이션 */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+
+        /* 모바일 최적화 */
+        @media (max-width: 768px) {
+            section { padding: 2rem 5%; }
+            .hero h1 { font-size: 2.5rem; }
+            .hero p { font-size: 1rem; }
+            .card { height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="cursor"></div>
+    <canvas id="bg-canvas"></canvas>
+
+    <section class="hero">
+        <h1 class="animate-text">NEURAL<br>DREAMSCAPE</h1>
+        <p class="animate-text">AI로 빚어낸 무한한 상상력</p>
+        <p class="animate-text">장효석</p>
+        <div class="scroll-indicator">SCROLL DOWN</div>
+    </section>
+
+    <section class="gallery">
+        <h2 class="gallery-title animate-scroll" style="font-size: 3rem; margin-bottom: 3rem; text-align: center; border-bottom: 2px solid var(--secondary-color); display: inline-block;">AI CHARACTERS</h2>
+        <p style="color:#aaa; margin-bottom: 2rem; margin-top: 1rem;" class="animate-scroll">카드를 클릭하여 캐릭터와 대화해보세요.</p>
+        <div class="card-container">
+            <div class="card animate-scroll hover-target" data-character="hwarin">
+                <img src="img/3a.png" alt="여검사 모용화린">
+                <div class="card-info">
+                    <h3>여검사 모용화린</h3>
+                    <p>모용세가의 고명딸. 냉정한 검제이자 당신의 스승.</p>
+                </div>
+            </div>
+            <div class="card animate-scroll hover-target" data-character="horn">
+                <img src="img/1a.jpg" alt="백발의 노장군 호른">
+                <div class="card-info">
+                    <h3>백발의 노장군 호른</h3>
+                    <p>전장의 전설. 호탕한 당신의 주군.</p>
+                </div>
+            </div>
+            <div class="card animate-scroll hover-target" data-character="kai">
+                <img src="img/2a.jpg" alt="불법 시술사 카이">
+                <div class="card-info">
+                    <h3>불법 시술사 카이</h3>
+                    <p>네오서울 뒷골목의 천재 의사. 당신의 친구.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cinema">
+        <h2 class="gallery-title animate-scroll">AI VIDEO</h2>
+        <div class="video-wrapper animate-scroll hover-target">
+            <iframe width="853" height="480" src="https://www.youtube.com/embed/Vfe2DdROTzs" title="이미지 프로덕션 과제-장효석" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+    </section>
+
+    <section class="contact">
+        <h2 class="animate-scroll" style="font-size: 3rem;">CONTACT</h2>
+        <p class="animate-scroll" style="margin-top: 1rem; color: #aaa;">프로젝트 문의 및 협업 제안</p>
+        <p class="animate-scroll" style="margin-top: 1rem; color: #aaa;">jkk3150@naver.com</p>
+    </section>
+
+    <div class="chat-modal" id="chatModal">
+        <div class="chat-container">
+            <div class="chat-header">
+                <span class="chat-title" id="chatTitle">CHARACTER NAME</span>
+                <button class="close-btn" id="closeChat">&times;</button>
+            </div>
+            <div class="chat-messages" id="chatMessages"></div>
+            <div id="typingIndicator" style="display:none; padding:0.6rem 1rem; color:#ccc; font-size:0.9rem;">대화 상대가 입력 중입니다...</div>
+            <div class="chat-input-area">
+                <input type="text" id="chatInput" placeholder="대화를 시작하세요..." autocomplete="off">
+                <button class="chat-send-btn" id="sendBtn">전송</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 0. 캐릭터 페르소나 데이터 ---
+        const characters = {
+            horn: {
+                name: "백발의 노장군 호른",
+                greeting: "하하하! 왔는가, 나의 책사여! 오늘은 어떤 지략을 들려주려나?",
+                systemPrompt: `당신은 '백발의 노장군 호른'입니다. 사용자는 당신의 책사입니다.
+                [성격] 호탕함, 강직함, 인정 많음, 충성심 강함.
+                [말투] 굵고 낮은 목소리, "하하하!"하고 자주 웃음. 반말을 사용하되 위엄이 있음.`
+            },
+            hwarin: {
+                name: "여검사 모용화린",
+                greeting: "왔느냐. 검을 잡는 자세가 흐트러졌구나, 제자야.",
+                systemPrompt: `당신은 '여검사 모용화린'입니다. 사용자는 당신의 제자입니다.
+                [성격] 냉정함, 침착함, 겉으론 차갑지만 속으론 제자를 아낌.
+                [말투] 감정이 드러나지 않는 단호하고 낮은 어조.`
+            },
+            kai: {
+                name: "불법 시술사 카이",
+                greeting: "어이 챔피언! 또 어디 부서져서 왔어? 싸게 해줄게~",
+                systemPrompt: `당신은 네오서울 뒷골목의 '불법 시술사 카이'입니다. 사용자는 당신의 친구입니다.
+                [성격] 장난기 많음, 능글맞음, 속정 깊음.
+                [말투] 빠르고 유쾌함. 은어를 섞어 씀. 반말 사용.`
+            }
+        };
+
+        let currentCharacter = null;
+        let currentCharacterKey = null;
+        let chatHistory = [];
+
+        // --- 1. GSAP & ScrollTrigger ---
+        gsap.registerPlugin(ScrollTrigger);
+
+        gsap.to(".hero .animate-text", {
+            y: 0, opacity: 1, duration: 1.5, stagger: 0.3, ease: "power4.out"
+        });
+
+        document.querySelectorAll(".animate-scroll").forEach(el => {
+            gsap.fromTo(el, 
+                { y: 50, opacity: 0 },
+                {
+                    y: 0, opacity: 1, duration: 1.0, ease: "power3.out",
+                    scrollTrigger: { trigger: el, start: "top 85%" }
+                }
+            );
+        });
+
+        // --- 2. 커서 ---
+        if (window.matchMedia("(pointer: fine)").matches) {
+            const cursor = document.querySelector('.cursor');
+            document.addEventListener('mousemove', (e) => {
+                gsap.to(cursor, { x: e.clientX, y: e.clientY, duration: 0.1, ease: "power2.out" });
+            });
+            document.body.addEventListener('mouseover', (e) => {
+                if(e.target.closest('.card') || e.target.closest('button')) {
+                    cursor.classList.add('hovered');
+                } else {
+                    cursor.classList.remove('hovered');
+                }
+            });
+        }
+
+        // --- 3. 배경 파티클 ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', () => { resize(); initParticles(); });
+        resize();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * width; this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5; this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2;
+                this.color = Math.random() > 0.5 ? 'rgba(0, 242, 255, ' : 'rgba(112, 0, 255, ';
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                if (this.x < 0) this.x = width; if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height; if (this.y > height) this.y = 0;
+            }
+            draw() {
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color + Math.random() * 0.5 + ')'; ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = window.innerWidth < 768 ? 25 : 50; 
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+        function animateParticles() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateParticles);
+        }
+        initParticles(); animateParticles();
+
+        // --- 4. 채팅 시스템 ---
+        const modal = document.getElementById('chatModal');
+        const chatTitle = document.getElementById('chatTitle');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const closeBtn = document.getElementById('closeChat');
+
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', () => {
+                const charKey = card.getAttribute('data-character');
+                if (characters[charKey]) openChat(charKey);
+            });
+        });
+
+        function openChat(charKey) {
+            currentCharacter = characters[charKey];
+            chatTitle.innerText = currentCharacter.name;
+            chatMessages.innerHTML = '';
+            chatHistory = [];
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            addMessage(currentCharacter.greeting, 'ai');
+            currentCharacterKey = charKey;
+            setTimeout(() => {
+                try { chatInput.focus(); } catch (e) { /* ignore */ }
+            }, 60);
+        }
+
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        });
+
+        function addMessage(text, sender) {
+            const div = document.createElement('div');
+            div.classList.add('message', sender);
+            if (sender === 'ai') {
+                div.innerHTML = marked.parse(text);
+            } else {
+                div.textContent = text;
+            }
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            addMessage(text, 'user');
+            chatHistory.push({ role: "user", content: text });
+            chatInput.value = '';
+
+            try {
+                const messagesForApi = [
+                    { role: "system", content: currentCharacter.systemPrompt },
+                    ...chatHistory,
+                ];
+
+                // show typing indicator if present
+                const typingEl = document.getElementById('typingIndicator');
+                if (typingEl) typingEl.style.display = 'block';
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: messagesForApi, character: currentCharacterKey })
+                });
+
+                // handle response robustly
+                const textBody = await response.text();
+                let data = null;
+                try { data = textBody ? JSON.parse(textBody) : null; } catch (e) { throw new Error('서버가 JSON을 반환하지 않았습니다: ' + textBody); }
+
+                if (!data) throw new Error('서버 응답이 비어 있습니다.');
+                if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+                const aiResponse = data.choices?.[0]?.message?.content || data.choices?.[0]?.text || '응답을 받지 못했습니다.';
+
+                chatHistory.push({ role: "assistant", content: aiResponse });
+                if (typingEl) typingEl.style.display = 'none';
+                addMessage(aiResponse, 'ai');
+
+            } catch (error) {
+                console.error(error);
+                const typingEl = document.getElementById('typingIndicator');
+                if (typingEl) typingEl.style.display = 'none';
+                addMessage("오류: " + error.message, 'ai');
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+    </script>
+</body>
+</html>
