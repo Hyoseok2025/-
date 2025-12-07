@@ -53,7 +53,8 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          # Production 배포 (환경변수를 배포 시점에 주입)
+          # Production 배포 (Vertex AI 환경변수 주입)
           vercel --prod --token=$VERCEL_TOKEN --yes \
-            -e GEMINI_API_URL="${{ secrets.GEMINI_API_URL }}" \
+            -e GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}" \
+            -e GCP_REGION="us-central1" \
             -e GEMINI_ACCESS_TOKEN="$GEMINI_ACCESS_TOKEN"
