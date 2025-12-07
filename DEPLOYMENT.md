@@ -331,3 +331,4 @@ Vercel 대시보드에서 환경변수를 암호화하여 저장 (자동 처리�
 - [GitHub Actions OIDC with GCP](https://cloud.google.com/iam/docs/workload-identity-federation-with-github)
 - [Vercel Environment Variables](https://vercel.com/docs/concepts/projects/environment-variables)
 - [Gemini API Reference](https://ai.google.dev/api)
+# Deployment test
