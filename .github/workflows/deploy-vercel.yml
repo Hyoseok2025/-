@@ -1,0 +1,70 @@
+name: Deploy to Vercel with Workload Identity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# GitHub OIDC 토큰 발급을 위한 권한 설정 (필수!)
+permissions:
+  id-token: write   # OIDC 토큰 발급
+  contents: read    # 코드 체크아웃
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          # Workload Identity Provider 전체 경로 (기존 oidc1 사용)
+          workload_identity_provider: 'projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/github-pool/providers/oidc1'
+          # 서비스 계정 이메일
+          service_account: 'gemini-caller@${{ secrets.GCP_PROJECT_ID }}.iam.gserviceaccount.com'
+          # 토큰 형식
+          token_format: 'access_token'
+          # 액세스 토큰 유효시간 (1시간)
+          access_token_lifetime: '3600s'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get Access Token for Gemini
+        id: get-token
+        run: |
+          # Workload Identity로 받은 액세스 토큰
+          TOKEN=$(gcloud auth print-access-token)
+          echo "::add-mask::$TOKEN"
+          # GitHub 환경변수로 저장 (다음 스텝에서 사용)
+          echo "GEMINI_ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Set Vercel Environment Variables
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          # Vercel 프로젝트에 환경변수 설정 (production)
+          # GEMINI_API_URL 설정
+          echo "${{ secrets.GEMINI_API_URL }}" | vercel env add GEMINI_API_URL production --token=$VERCEL_TOKEN || true
+          
+          # GEMINI_ACCESS_TOKEN 설정 (주의: 1시간마다 만료됨)
+          echo "$GEMINI_ACCESS_TOKEN" | vercel env add GEMINI_ACCESS_TOKEN production --token=$VERCEL_TOKEN || true
+
+      - name: Deploy to Vercel (Production)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          # Production 배포
+          vercel --prod --token=$VERCEL_TOKEN --yes
