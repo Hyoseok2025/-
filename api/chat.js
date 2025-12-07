@@ -4,7 +4,7 @@
     // ==========================================
     // IMPORTANT: Replace with your real API key via environment variable in production.
     // Do NOT commit real keys. Use `process.env.OPENAI_API_KEY` or similar.
-    const API_KEY = 'YOUR_API_KEY_HERE';
+    const API_KEY = 'AIzaSyAPiIhzHr1mb-jOZW91C9jYDYY7Q6N-M30'
     
     // --- 0. 캐릭터 페르소나 데이터 (Prompt Engineering) ---
     const characters = {
