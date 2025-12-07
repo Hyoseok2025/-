@@ -38,8 +38,8 @@ jobs:
       - name: Get Access Token for Gemini
         id: get-token
         run: |
-          # Workload Identity로 받은 액세스 토큰
-          TOKEN=$(gcloud auth print-access-token)
+          # Gemini API용 액세스 토큰 (올바른 scope 포함)
+          TOKEN=$(gcloud auth print-access-token --scopes=https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/generative-language.retriever)
           echo "::add-mask::$TOKEN"
           # GitHub 환경변수로 저장 (다음 스텝에서 사용)
           echo "GEMINI_ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
