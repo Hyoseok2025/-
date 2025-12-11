@@ -62,4 +62,4 @@ jobs:
           vercel --prod --token=$VERCEL_TOKEN --yes \
             -e GEMINI_ACCESS_TOKEN="$GEMINI_ACCESS_TOKEN" \
             -e GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}" \
-            -e GCP_REGION="us-west1"
+            -e GCP_REGION="us-central1"

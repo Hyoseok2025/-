@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
     // 환경변수에서 Vertex AI 설정 로드
     const GEMINI_ACCESS_TOKEN = process.env.GEMINI_ACCESS_TOKEN; // Workload Identity 토큰
     const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID || 'project-9b3bf68d-fb65-4e15-a16';
-    const GCP_REGION = process.env.GCP_REGION || 'us-west1';
+    const GCP_REGION = process.env.GCP_REGION || 'us-central1';
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
 
     // Vertex AI 엔드포인트 (gemini-3-pro-preview)
