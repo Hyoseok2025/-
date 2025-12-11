@@ -64,21 +64,19 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: { message: 'Invalid messages array' } });
     }
 
-    // 환경변수에서 Vertex AI 설정 로드
-    const GEMINI_ACCESS_TOKEN = process.env.GEMINI_ACCESS_TOKEN; // Workload Identity 토큰
-    const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID || 'project-9b3bf68d-fb65-4e15-a16';
-    const GCP_REGION = process.env.GCP_REGION || 'us-central1';
+    // 환경변수에서 Google AI Studio 설정 로드
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Google AI Studio API 키
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
 
-    // Vertex AI 엔드포인트 (gemini-3-pro-preview)
-    const VERTEX_AI_URL = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/gemini-3-pro-preview:generateContent`;
+    // Google AI Studio 엔드포인트
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-    // 데모 모드이거나 토큰이 없으면 canned response 반환
-    if (FORCE_DEMO || !GEMINI_ACCESS_TOKEN) {
+    // 데모 모드이거나 API 키가 없으면 canned response 반환
+    if (FORCE_DEMO || !GEMINI_API_KEY) {
       const canned = getCannedResponse(character);
       return res.status(200).json({
         choices: [{ message: { content: canned } }],
-        note: FORCE_DEMO ? 'FORCE_DEMO enabled' : 'Missing access token'
+        note: FORCE_DEMO ? 'FORCE_DEMO enabled' : 'Missing API key'
       });
     }
 
@@ -88,13 +86,12 @@ module.exports = async (req, res) => {
       return `[${role}] ${m.content}`;
     }).join('\n');
 
-    // Vertex AI API 호출 (Bearer 토큰 인증)
+    // Google AI Studio API 호출
     const fetch = globalThis.fetch || (await import('node-fetch')).default;
-    const response = await fetch(VERTEX_AI_URL, {
+    const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GEMINI_ACCESS_TOKEN}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         contents: [{
@@ -110,7 +107,7 @@ module.exports = async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Vertex AI error:', response.status, data);
+      console.error('Google AI Studio error:', response.status, data);
       // 폴백 응답
       const canned = getCannedResponse(character);
       return res.status(200).json({
