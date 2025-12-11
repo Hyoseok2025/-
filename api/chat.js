@@ -70,8 +70,8 @@ module.exports = async (req, res) => {
     const GCP_REGION = process.env.GCP_REGION || 'us-central1';
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
 
-    // Vertex AI 엔드포인트
-    const VERTEX_AI_URL = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/gemini-1.5-flash:streamGenerateContent`;
+    // Vertex AI 엔드포인트 (stable model)
+    const VERTEX_AI_URL = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/gemini-1.0-pro:generateContent`;
 
     // 데모 모드이거나 토큰이 없으면 canned response 반환
     if (FORCE_DEMO || !GEMINI_ACCESS_TOKEN) {
