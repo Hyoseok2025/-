@@ -64,10 +64,14 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: { message: 'Invalid messages array' } });
     }
 
-    // 환경변수에서 Gemini 설정 로드
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    const GEMINI_API_URL = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent';
+    // 환경변수에서 Vertex AI 설정 로드
+    const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Google Cloud API 키
+    const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID || 'project-9b3bf68d-fb65-4e15-a16';
+    const GCP_REGION = process.env.GCP_REGION || 'us-central1';
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
+
+    // Vertex AI 엔드포인트
+    const VERTEX_AI_URL = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/gemini-1.5-flash-002:generateContent`;
 
     // 데모 모드이거나 API 키가 없으면 canned response 반환
     if (FORCE_DEMO || !GEMINI_API_KEY) {
@@ -84,9 +88,9 @@ module.exports = async (req, res) => {
       return `[${role}] ${m.content}`;
     }).join('\n');
 
-    // Gemini API 호출 (API 키 인증)
+    // Vertex AI API 호출 (API 키 인증)
     const fetch = globalThis.fetch || (await import('node-fetch')).default;
-    const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+    const apiUrl = `${VERTEX_AI_URL}?key=${GEMINI_API_KEY}`;
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
@@ -106,7 +110,7 @@ module.exports = async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error('Gemini API error:', response.status, data);
+      console.error('Vertex AI error:', response.status, data);
       // 폴백 응답
       const canned = getCannedResponse(character);
       return res.status(200).json({
