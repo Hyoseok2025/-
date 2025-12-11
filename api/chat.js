@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
 
     // 환경변수에서 Gemini 설정 로드
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    const GEMINI_API_URL = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent';
+    const GEMINI_API_URL = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent';
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
 
     // 데모 모드이거나 API 키가 없으면 canned response 반환
