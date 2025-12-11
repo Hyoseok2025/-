@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
     }
 
     // 환경변수에서 Vertex AI 설정 로드
-    const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Google Cloud API 키
+    const GEMINI_ACCESS_TOKEN = process.env.GEMINI_ACCESS_TOKEN; // Workload Identity 토큰
     const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID || 'project-9b3bf68d-fb65-4e15-a16';
     const GCP_REGION = process.env.GCP_REGION || 'us-central1';
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
@@ -73,12 +73,12 @@ module.exports = async (req, res) => {
     // Vertex AI 엔드포인트
     const VERTEX_AI_URL = `https://${GCP_REGION}-aiplatform.googleapis.com/v1/projects/${GCP_PROJECT_ID}/locations/${GCP_REGION}/publishers/google/models/gemini-1.5-flash-002:generateContent`;
 
-    // 데모 모드이거나 API 키가 없으면 canned response 반환
-    if (FORCE_DEMO || !GEMINI_API_KEY) {
+    // 데모 모드이거나 토큰이 없으면 canned response 반환
+    if (FORCE_DEMO || !GEMINI_ACCESS_TOKEN) {
       const canned = getCannedResponse(character);
       return res.status(200).json({
         choices: [{ message: { content: canned } }],
-        note: FORCE_DEMO ? 'FORCE_DEMO enabled' : 'Missing API key'
+        note: FORCE_DEMO ? 'FORCE_DEMO enabled' : 'Missing access token'
       });
     }
 
@@ -88,13 +88,13 @@ module.exports = async (req, res) => {
       return `[${role}] ${m.content}`;
     }).join('\n');
 
-    // Vertex AI API 호출 (API 키 인증)
+    // Vertex AI API 호출 (Bearer 토큰 인증)
     const fetch = globalThis.fetch || (await import('node-fetch')).default;
-    const apiUrl = `${VERTEX_AI_URL}?key=${GEMINI_API_KEY}`;
-    const response = await fetch(apiUrl, {
+    const response = await fetch(VERTEX_AI_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GEMINI_ACCESS_TOKEN}`
       },
       body: JSON.stringify({
         contents: [{

@@ -53,7 +53,8 @@ jobs:
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
         run: |
-          # Production 배포 (API 키 방식)
+          # Production 배포 (Workload Identity Bearer 토큰 방식)
           vercel --prod --token=$VERCEL_TOKEN --yes \
-            -e GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
-            -e GEMINI_API_URL="${{ secrets.GEMINI_API_URL }}"
+            -e GEMINI_ACCESS_TOKEN="$GEMINI_ACCESS_TOKEN" \
+            -e GCP_PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}" \
+            -e GCP_REGION="us-central1"
