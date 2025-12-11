@@ -68,8 +68,8 @@ module.exports = async (req, res) => {
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY; // Google AI Studio API 키
     const FORCE_DEMO = process.env.FORCE_DEMO === 'true';
 
-    // Google AI Studio 엔드포인트
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+    // Google AI Studio 엔드포인트 (v1 API)
+    const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
     // 데모 모드이거나 API 키가 없으면 canned response 반환
     if (FORCE_DEMO || !GEMINI_API_KEY) {
