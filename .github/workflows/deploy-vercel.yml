@@ -44,6 +44,11 @@ jobs:
           # GitHub 환경변수로 저장 (다음 스텝에서 사용)
           echo "GEMINI_ACCESS_TOKEN=$TOKEN" >> $GITHUB_ENV
 
+      - name: Enable Vertex AI API
+        run: |
+          gcloud services enable aiplatform.googleapis.com --project=${{ secrets.GCP_PROJECT_ID }}
+          echo "✅ Vertex AI API enabled"
+
       - name: Install Vercel CLI
         run: npm install -g vercel
 
