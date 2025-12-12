@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEURAL DREAMSCAPE | AI Portfolio</title>
+    <title>AI DREAMING | AI Portfolio</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;500;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
@@ -326,6 +326,73 @@
             cursor: pointer;
         }
 
+        /* --- 6. Contact Form --- */
+        .contact-form {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .contact-form input,
+        .contact-form textarea {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .contact-form input::placeholder,
+        .contact-form textarea::placeholder {
+            color: #666;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
+        }
+
+        .contact-form input:focus,
+        .contact-form textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        .contact-form textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .submit-btn {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 25px var(--accent-color);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* 애니메이션 */
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
@@ -347,8 +414,8 @@
     <canvas id="bg-canvas"></canvas>
 
     <section class="hero">
-        <h1 class="animate-text">NEURAL<br>DREAMSCAPE</h1>
-        <p class="animate-text">AI로 빚어낸 무한한 상상력</p>
+        <h1 class="animate-text">AI<br>DREAMING</h1>
+        <p class="animate-text">AI로 꿈을 이뤄내다</p>
         <p class="animate-text">장효석</p>
         <div class="scroll-indicator">SCROLL DOWN</div>
     </section>
@@ -361,21 +428,23 @@
                 <img src="img/3a.png" alt="여검사 모용화린">
                 <div class="card-info">
                     <h3>여검사 모용화린</h3>
-                    <p>모용세가의 고명딸. 냉정한 검제이자 당신의 스승.</p>
+                    <p>모용세가의 고명딸로서 살아가다 약관(20세)이 되고 강호를 누비며 검사로서 최고의 별호 검제(劍帝)를 얻게 된다. 현재는 이립(30세)에 무림맹의 부맹주로서 제자인 당신을 거둬 본인의 무공을 전수하고 있다.</p>
                 </div>
             </div>
             <div class="card animate-scroll hover-target" data-character="horn">
                 <img src="img/1a.jpg" alt="백발의 노장군 호른">
                 <div class="card-info">
                     <h3>백발의 노장군 호른</h3>
-                    <p>전장의 전설. 호탕한 당신의 주군.</p>
+                    <p>수많은 전장을 누빈 백발의 노장 대장군 호른.
+나이가 70인 만큼 전성기가 지났지만 아직까지 그의 몸은 거대했으며 정신 또한 날카롭고 호탕하다. 왼눈은 전장에서 잃었고, 오른른팔도 잃었으나 한 손으로도 거대한 대검을 다루며 전장의 전설로 불린다. 당신은 그의 책사로서 오랜 전우이자 신뢰받는 지략가이다.
+</p>
                 </div>
             </div>
             <div class="card animate-scroll hover-target" data-character="kai">
                 <img src="img/2a.jpg" alt="불법 시술사 카이">
                 <div class="card-info">
                     <h3>불법 시술사 카이</h3>
-                    <p>네오서울 뒷골목의 천재 의사. 당신의 친구.</p>
+                    <p>카이는 어릴적부터 천재 로봇 개조 시술사로 이름을 날렸으나, 네오서울의 시장의 몸을 시술 도중 네오서울 시장의 몸이 시술을 버티지 못하고 죽게된다. 이에 카이는 면허 취소와 함께 의료 소송을 당하고 직장인 네오서울병원에서 해고당한다. 하지만, 이 사건은 카이가 데리고 다니던 수제자(네오서울병원 원장의 아들)가 카이의 자리를 노려 시장의 몸에 시술 전에 투약 되어선 안 되는 약물을 몰래 투약해서 벌어진 일인 것을 알게되었고 그를 고소하지만, 증거불충분(증거들은 충분했으나 어떤 연유에서인지 판사는 이를 증거불충분으로 판결을 내렸다)으로 실패하게 되었고, 암살시도까지 당해 뒷골목에 숨어 불법 로봇 개조 시술사로 살고있다. 당신은 뒷골목 투기장의 챔피언이며 카이에게 불법시술 첫 고객이자 절친입니다.</p>
                 </div>
             </div>
         </div>
@@ -389,9 +458,13 @@
     </section>
 
     <section class="contact">
-        <h2 class="animate-scroll" style="font-size: 3rem;">CONTACT</h2>
-        <p class="animate-scroll" style="margin-top: 1rem; color: #aaa;">프로젝트 문의 및 협업 제안</p>
-        <p class="animate-scroll" style="margin-top: 1rem; color: #aaa;">jkk3150@naver.com</p>
+        <h2 class="animate-scroll" style="font-size: 3rem; margin-bottom: 2rem;">CONTACT <span style="color: var(--secondary-color);"></span></h2>
+        <form class="contact-form animate-scroll" id="contactForm">
+            <input type="text" name="name" placeholder="YOUR NAME" required>
+            <input type="email" name="email" placeholder="YOUR EMAIL" required>
+            <textarea name="message" rows="6" placeholder="MESSAGE FOR COLLABORATION..." required></textarea>
+            <button type="submit" class="submit-btn">SEND TRANSMISSION</button>
+        </form>
     </section>
 
     <div class="chat-modal" id="chatModal">
@@ -533,12 +606,54 @@
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             addMessage(currentCharacter.greeting, 'ai');
+            // greeting을 대화 히스토리에 추가하여 AI가 인사한 것을 기억하도록 함
+            chatHistory.push({ role: "assistant", content: currentCharacter.greeting });
             currentCharacterKey = charKey;
             setTimeout(() => {
                 try { chatInput.focus(); } catch (e) { /* ignore */ }
             }, 60);
         }
 
+
+        // --- 5. Contact Form ---
+        const contactForm = document.getElementById('contactForm');
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(contactForm);
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                message: formData.get('message')
+            };
+
+            const submitBtn = contactForm.querySelector('.submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'SENDING...';
+
+            try {
+                // mailto 링크로 이메일 클라이언트 열기
+                const subject = encodeURIComponent(`[Portfolio Contact] ${data.name}`);
+                const body = encodeURIComponent(`From: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message}`);
+                const mailtoLink = `mailto:jkk3150@naver.com?subject=${subject}&body=${body}`;
+                
+                window.location.href = mailtoLink;
+                
+                // 폼 초기화
+                setTimeout(() => {
+                    contactForm.reset();
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'SEND TRANSMISSION';
+                    alert('메일 클라이언트가 열렸습니다. 메일을 전송해주세요!');
+                }, 1000);
+                
+            } catch (error) {
+                console.error(error);
+                alert('오류가 발생했습니다. 직접 jkk3150@naver.com으로 연락 주세요.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'SEND TRANSMISSION';
+            }
+        });
         closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
             document.body.style.overflow = 'auto';
@@ -577,7 +692,7 @@
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: messagesForApi, character: currentCharacterKey })
+                    body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: messagesForApi, character: currentCharacterKey })
                 });
 
                 // handle response robustly
