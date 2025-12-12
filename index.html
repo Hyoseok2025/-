@@ -606,6 +606,8 @@
             modal.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             addMessage(currentCharacter.greeting, 'ai');
+            // greeting을 대화 히스토리에 추가하여 AI가 인사한 것을 기억하도록 함
+            chatHistory.push({ role: "assistant", content: currentCharacter.greeting });
             currentCharacterKey = charKey;
             setTimeout(() => {
                 try { chatInput.focus(); } catch (e) { /* ignore */ }
