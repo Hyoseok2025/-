@@ -326,6 +326,73 @@
             cursor: pointer;
         }
 
+        /* --- 6. Contact Form --- */
+        .contact-form {
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .contact-form input,
+        .contact-form textarea {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: 1px solid #333;
+            border-radius: 5px;
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .contact-form input::placeholder,
+        .contact-form textarea::placeholder {
+            color: #666;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
+        }
+
+        .contact-form input:focus,
+        .contact-form textarea:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+
+        .contact-form textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .submit-btn {
+            padding: 1rem 2rem;
+            background: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-color);
+            color: #000;
+            box-shadow: 0 0 25px var(--accent-color);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         /* 애니메이션 */
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
@@ -391,9 +458,13 @@
     </section>
 
     <section class="contact">
-        <h2 class="animate-scroll" style="font-size: 3rem;">CONTACT</h2>
-        <p class="animate-scroll" style="margin-top: 1rem; color: #aaa;">프로젝트 문의 및 협업 제안</p>
-        <p class="animate-scroll" style="margin-top: 1rem; color: #aaa;">jkk3150@naver.com</p>
+        <h2 class="animate-scroll" style="font-size: 3rem; margin-bottom: 2rem;">CONTACT <span style="color: var(--secondary-color);">NEXUS</span></h2>
+        <form class="contact-form animate-scroll" id="contactForm">
+            <input type="text" name="name" placeholder="YOUR NAME" required>
+            <input type="email" name="email" placeholder="YOUR EMAIL" required>
+            <textarea name="message" rows="6" placeholder="MESSAGE FOR COLLABORATION..." required></textarea>
+            <button type="submit" class="submit-btn">SEND TRANSMISSION</button>
+        </form>
     </section>
 
     <div class="chat-modal" id="chatModal">
@@ -541,6 +612,46 @@
             }, 60);
         }
 
+
+        // --- 5. Contact Form ---
+        const contactForm = document.getElementById('contactForm');
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(contactForm);
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                message: formData.get('message')
+            };
+
+            const submitBtn = contactForm.querySelector('.submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'SENDING...';
+
+            try {
+                // mailto 링크로 이메일 클라이언트 열기
+                const subject = encodeURIComponent(`[Portfolio Contact] ${data.name}`);
+                const body = encodeURIComponent(`From: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message}`);
+                const mailtoLink = `mailto:jkk3150@naver.com?subject=${subject}&body=${body}`;
+                
+                window.location.href = mailtoLink;
+                
+                // 폼 초기화
+                setTimeout(() => {
+                    contactForm.reset();
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'SEND TRANSMISSION';
+                    alert('메일 클라이언트가 열렸습니다. 메일을 전송해주세요!');
+                }, 1000);
+                
+            } catch (error) {
+                console.error(error);
+                alert('오류가 발생했습니다. 직접 jkk3150@naver.com으로 연락 주세요.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'SEND TRANSMISSION';
+            }
+        });
         closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
             document.body.style.overflow = 'auto';
