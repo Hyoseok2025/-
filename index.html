@@ -418,6 +418,27 @@
             overflow: hidden;
         }
 
+        .direct-contact {
+            text-align: center;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+            color: #888;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .direct-contact a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+
+        .direct-contact a:hover {
+            color: #00ff00;
+            border-bottom: 1px solid #00ff00;
+        }
+
         .submit-btn:hover {
             background: var(--accent-color);
             color: #000;
@@ -522,6 +543,7 @@
 
     <section class="contact">
         <h2 class="animate-scroll" style="font-size: 3rem; margin-bottom: 2rem;">CONTACT <span style="color: var(--secondary-color);"></span></h2>
+        <p class="direct-contact animate-scroll">Direct Email: <a href="mailto:jkk3150@naver.com">jkk3150@naver.com</a></p>
         <form class="contact-form animate-scroll" id="contactForm">
             <input type="text" name="name" placeholder="YOUR NAME" required>
             <input type="email" name="email" placeholder="YOUR EMAIL" required>
