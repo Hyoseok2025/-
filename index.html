@@ -194,22 +194,58 @@
         }
 
         /* --- 비디오 섹션 --- */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 3rem;
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .video-item {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .video-title {
+            font-size: 1.2rem;
+            color: #00ff00;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
         .video-wrapper {
             width: 100%;
-            max-width: 1000px;
             aspect-ratio: 16 / 9;
             background: #000;
             border: 2px solid #333;
             position: relative;
             overflow: hidden;
             border-radius: 10px;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .video-wrapper:hover {
+            border-color: #00ff00;
+            box-shadow: 0 0 50px rgba(0, 255, 0, 0.3);
         }
 
         .video-wrapper iframe {
             width: 100%;
             height: 100%;
             border: none;
+        }
+
+        @media (max-width: 768px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
         }
 
         /* --- 5. 채팅 모달 --- */
@@ -451,9 +487,36 @@
     </section>
 
     <section class="cinema">
-        <h2 class="gallery-title animate-scroll">AI VIDEO</h2>
-        <div class="video-wrapper animate-scroll hover-target">
-            <iframe width="853" height="480" src="https://www.youtube.com/embed/Vfe2DdROTzs" title="이미지 프로덕션 과제-장효석" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <h2 class="gallery-title animate-scroll" style="margin-bottom: 3rem;">AI VIDEOS</h2>
+        
+        <div class="video-grid">
+            <div class="video-item animate-scroll">
+                <h3 class="video-title">AI VIDEO - DREAMINA</h3>
+                <div class="video-wrapper hover-target">
+                    <iframe width="853" height="480" src="https://www.youtube.com/embed/Vfe2DdROTzs" title="이미지 프로덕션 과제-장효석" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <div class="video-item animate-scroll">
+                <h3 class="video-title">AI VIDEO - VEO3</h3>
+                <div class="video-wrapper hover-target">
+                    <iframe width="853" height="480" src="https://www.youtube.com/embed/jLA1qrmPdE0" title="AI가격추적" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <div class="video-item animate-scroll">
+                <h3 class="video-title">AI VIDEO - SORA2</h3>
+                <div class="video-wrapper hover-target">
+                    <iframe width="853" height="480" src="https://www.youtube.com/embed/6bStppo5PaE" title="ai영상 1분 단편" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <div class="video-item animate-scroll">
+                <h3 class="video-title">AI VIDEO - KLING</h3>
+                <div class="video-wrapper hover-target">
+                    <iframe width="853" height="480" src="https://www.youtube.com/embed/pYS2MDWxz2g" title="12월 공모전" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+            </div>
         </div>
     </section>
 
